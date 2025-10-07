@@ -1,25 +1,34 @@
-import { IsArray, IsEnum, IsInt, IsOptional, ValidateNested } from 'class-validator';
+import { IsArray, ArrayMinSize, IsEnum, IsInt, IsOptional, IsPositive, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { MetodoPago, TipoPedido } from '../pedido.entity';
-import { ItemDto } from './item.dto';
+import { DestinoItem } from '../detalle-pedido.entity';
+class ItemDto {
+  @IsInt() @IsPositive()
+  id_producto: number;
+
+  @IsInt() @IsPositive()
+  cantidad: number;
+
+  @IsOptional()
+  notas?: string;
+  @IsOptional() @IsEnum(DestinoItem)
+  destino?: DestinoItem;
+}
 
 export class CreatePedidoDto {
-  @IsInt()
+  @IsInt() @IsPositive()
   id_caja: number;
 
   @IsEnum(TipoPedido)
   tipo_pedido: TipoPedido;
 
-  @IsOptional()
-  @IsInt()
-  num_mesa?: number;
-
+  @IsOptional() @IsInt()
+  num_mesa?: number | null;
+ 
   @IsEnum(MetodoPago)
   metodo_pago: MetodoPago;
 
-  @IsArray()
-  @ValidateNested({ each: true })
+  @IsArray() @ArrayMinSize(1) @ValidateNested({ each: true })
   @Type(() => ItemDto)
   items: ItemDto[];
 }
-

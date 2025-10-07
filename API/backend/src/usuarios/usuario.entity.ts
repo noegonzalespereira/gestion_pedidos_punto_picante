@@ -26,7 +26,7 @@ export class Usuario {
   @Column({ unique: true })
   email: string;
 
-  // ⚠️ No se selecciona por defecto
+  
   @Column({ select: false })
   contrasena: string;
 

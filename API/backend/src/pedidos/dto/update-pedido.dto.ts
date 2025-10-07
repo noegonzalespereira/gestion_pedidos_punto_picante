@@ -1,25 +1,32 @@
-import { IsArray, IsEnum, IsInt, IsOptional, ValidateNested } from 'class-validator';
+import { IsArray, IsEnum, IsInt, IsOptional, IsPositive, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { MetodoPago, TipoPedido } from '../pedido.entity';
-import { ItemDto } from './item.dto';
+import { DestinoItem } from '../detalle-pedido.entity';
+class ItemUpdDto {
+  @IsInt() @IsPositive()
+  id_producto: number;
+
+  @IsInt() @IsPositive()
+  cantidad: number;
+
+  @IsOptional()
+  notas?: string | null;
+
+  @IsOptional() @IsEnum(DestinoItem)
+  destino?: DestinoItem
+}
 
 export class UpdatePedidoDto {
-  @IsOptional()
-  @IsEnum(TipoPedido)
+  @IsOptional() @IsEnum(TipoPedido)
   tipo_pedido?: TipoPedido;
 
-  @IsOptional()
-  @IsInt()
+  @IsOptional() @IsInt()
   num_mesa?: number | null;
 
-  @IsOptional()
-  @IsEnum(MetodoPago)
+  @IsOptional() @IsEnum(MetodoPago)
   metodo_pago?: MetodoPago;
 
-  // Si se envía, REEMPLAZA toda la lista (recalcula total)
-  @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => ItemDto)
-  items?: ItemDto[];
+  @IsOptional() @IsArray() @ValidateNested({ each: true })
+  @Type(() => ItemUpdDto)
+  items?: ItemUpdDto[];
 }

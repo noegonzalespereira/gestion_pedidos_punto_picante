@@ -1,7 +1,5 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { ReportesService } from './reportes.service';
-import { ReportQueryDto } from './dto/report-query.dto';
-import { ProductosRankingDto } from './dto/productos-ranking.dto';
 import { JwtAuthGuard, RolesGuard, Roles } from '../auth/guards';
 
 @Controller('reportes')
@@ -9,40 +7,34 @@ import { JwtAuthGuard, RolesGuard, Roles } from '../auth/guards';
 export class ReportesController {
   constructor(private readonly service: ReportesService) {}
 
-  @Get('ventas')
-  @Roles('GERENTE', 'CAJERO')
-  ventas(@Query() q: ReportQueryDto) {
-    if (q.cajero !== undefined) (q as any).cajero = Number(q.cajero);
-    return this.service.ventas(q);
-  }
-
-  @Get('gastos')
-  @Roles('GERENTE', 'CAJERO')
-  gastos(@Query() q: ReportQueryDto) {
-    if (q.cajero !== undefined) (q as any).cajero = Number(q.cajero);
-    return this.service.gastosPorPeriodo(q);
-  }
-
-  @Get('neto')
-  @Roles('GERENTE', 'CAJERO')
-  neto(@Query() q: ReportQueryDto) {
-    if (q.cajero !== undefined) (q as any).cajero = Number(q.cajero);
-    return this.service.neto(q);
-  }
-
-  @Get('productos/top')
+  /**
+   * GET /reportes/utilidad-teorica?desde=YYYY-MM-DD&hasta=YYYY-MM-DD&caja=1
+   * Roles: GERENTE (y si quieres, CAJERO para su caja).
+   */
+  @Get('utilidad-teorica')
   @Roles('GERENTE')
-  top(@Query() q: ProductosRankingDto) {
-    if (q.cajero !== undefined) (q as any).cajero = Number(q.cajero);
-    if (q.limite !== undefined) (q as any).limite = Number(q.limite);
-    return this.service.productosTop(q);
+  utilidadTeorica(
+    @Query('desde') desde?: string,
+    @Query('hasta') hasta?: string,
+    @Query('caja') caja?: string,
+  ) {
+    return this.service.utilidadTeorica({
+      desde,
+      hasta,
+      caja: caja ? Number(caja) : undefined,
+    });
   }
 
-  @Get('productos/bottom')
+  /**
+   * GET /reportes/mermas?desde=YYYY-MM-DD&hasta=YYYY-MM-DD
+   * Roles: GERENTE
+   */
+  @Get('mermas')
   @Roles('GERENTE')
-  bottom(@Query() q: ProductosRankingDto) {
-    if (q.cajero !== undefined) (q as any).cajero = Number(q.cajero);
-    if (q.limite !== undefined) (q as any).limite = Number(q.limite);
-    return this.service.productosBottom(q);
+  mermasResumen(
+    @Query('desde') desde?: string,
+    @Query('hasta') hasta?: string,
+  ) {
+    return this.service.mermasResumen({ desde, hasta });
   }
 }

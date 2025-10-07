@@ -1,11 +1,11 @@
-// src/productos/productos.controller.ts
-import { Body, Controller, Get, Param, Patch, Post, Delete, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Delete, Query, UseGuards,UploadedFile,UseInterceptors, BadRequestException } from '@nestjs/common';
 import { ProductosService } from './productos.service';
 import { CreateProductoDto } from './dto/create-producto.dto';
 import { UpdateProductoDto } from './dto/update-producto.dto';
 import { QueryProductosDto } from './dto/query-producto.dto';
 import { JwtAuthGuard, RolesGuard, Roles } from '../auth/guards';
 
+import { FileInterceptor } from '@nestjs/platform-express';
 @Controller('productos')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ProductosController {
@@ -26,9 +26,16 @@ export class ProductosController {
 
   @Post()
   @Roles('GERENTE')
-  create(@Body() dto: CreateProductoDto) {
+  @UseInterceptors(FileInterceptor('file'))
+  async create(@UploadedFile() file: Express.Multer.File, @Body() dto: CreateProductoDto) {
+    if (!file) {
+      throw new BadRequestException('La imagen es obligatoria');
+    }
+    const url =await this.service['cloudinary'].uploadImage(file);
+    dto.img_url = url;
     return this.service.create(dto);
   }
+  
 
   @Patch(':id')
   @Roles('GERENTE')

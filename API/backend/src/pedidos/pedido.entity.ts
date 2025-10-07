@@ -1,22 +1,14 @@
-// src/pedidos/pedido.entity.ts
 import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  OneToMany,
-  JoinColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
-  RelationId,
+  Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany,
+  JoinColumn, CreateDateColumn, UpdateDateColumn, RelationId,
 } from 'typeorm';
 import { Usuario } from '../usuarios/usuario.entity';
 import { Caja } from '../caja/caja.entity';
 import { DetallePedido } from './detalle-pedido.entity';
 
-export enum TipoPedido  { MESA = 'MESA', LLEVAR = 'LLEVAR' }
-export enum MetodoPago  { EFECTIVO = 'EFECTIVO', QR = 'QR' }
-export enum EstadoPago  { SIN_PAGAR = 'SIN_PAGAR', PAGADO = 'PAGADO' }
+export enum TipoPedido   { MESA = 'MESA', LLEVAR = 'LLEVAR',MIXTO='MIXTO' }
+export enum MetodoPago   { EFECTIVO = 'EFECTIVO', QR = 'QR' }
+export enum EstadoPago   { SIN_PAGAR = 'SIN_PAGAR', PAGADO = 'PAGADO' }
 export enum EstadoPedido { PENDIENTE = 'PENDIENTE', LISTO = 'LISTO' }
 
 @Entity('pedido')
@@ -24,16 +16,15 @@ export class Pedido {
   @PrimaryGeneratedColumn({ name: 'id_pedido' })
   id_pedido: number;
 
-  // ========= FK: id_usuario =========
+  // FK: id_usuario
   @ManyToOne(() => Usuario, (u) => u.pedidos, { nullable: false, onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'id_usuario' })
   usuario: Usuario;
 
-  // expone el id sin crear una segunda columna
   @RelationId((p: Pedido) => p.usuario)
   readonly id_usuario: number;
 
-  // ========= FK: id_caja =========
+  // FK: id_caja
   @ManyToOne(() => Caja, (c) => c.pedidos, { nullable: false, onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'id_caja' })
   caja: Caja;

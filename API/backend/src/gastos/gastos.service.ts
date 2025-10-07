@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-  // ojo: DeepPartial
+  
 import { Between, MoreThanOrEqual, LessThanOrEqual, Repository, DeepPartial } from 'typeorm';
 import { Gasto } from './gasto.entity';
 import { CreateGastoDto } from './dto/create-gasto.dto';

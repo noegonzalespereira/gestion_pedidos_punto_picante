@@ -15,7 +15,7 @@ export class UsersService {
   constructor(@InjectRepository(Usuario) private repo: Repository<Usuario>) {}
 
   async findAll() {
-    // Por select:false, contrasena no viene
+  
     return this.repo.find({
       select: ['id_usuario', 'nombre', 'email', 'rol', 'created_at'],
       order: { id_usuario: 'DESC' },

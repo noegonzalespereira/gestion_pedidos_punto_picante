@@ -1,14 +1,17 @@
-import { IsEnum, IsOptional, IsString, MaxLength, IsDecimal, IsInt, IsIn } from 'class-validator';
+import { IsEnum, isNotEmpty, IsString, MaxLength, IsDecimal, IsInt, IsIn, IsNotEmpty } from 'class-validator';
 import { TipoProducto } from '../producto.entity';
 
 export class CreateProductoDto {
-  @IsString() @MaxLength(120) nombre!: string;
-  @IsEnum(TipoProducto) tipo!: TipoProducto;
-  @IsDecimal({ decimal_digits: '0,2' }) precio!: string;
+  @IsString() @MaxLength(120) @IsNotEmpty() 
+  nombre!: string;
+  @IsEnum(TipoProducto) @IsNotEmpty()
+  tipo!: TipoProducto;
+  @IsDecimal({ decimal_digits: '0,2' }) @IsNotEmpty()
+  precio!: string;
 
-  @IsOptional() @IsString()
+  @IsNotEmpty() @IsString() 
   img_url?: string | null;
 
-  @IsOptional() @IsInt() @IsIn([0,1])
+  @IsInt() @IsIn([0,1])
   activo?: 0 | 1;
 }

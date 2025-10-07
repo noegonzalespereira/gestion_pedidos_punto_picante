@@ -1,25 +1,32 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Like, Repository, DeepPartial } from 'typeorm';
 import { Producto } from './producto.entity';
 import { CreateProductoDto } from './dto/create-producto.dto';
 import { UpdateProductoDto } from './dto/update-producto.dto';
 import { QueryProductosDto } from './dto/query-producto.dto';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
 
 @Injectable()
 export class ProductosService {
-  constructor(@InjectRepository(Producto) private readonly repo: Repository<Producto>) {}
+  constructor(@InjectRepository(Producto) 
+  private readonly repo: Repository<Producto>,
+  private cloudinary: CloudinaryService
+) {}
 
   async create(dto: CreateProductoDto) {
+
     const exists = await this.repo.findOne({ where: { nombre: dto.nombre } });
     if (exists) throw new ConflictException('Ya existe un producto con ese nombre');
-
+    if (!dto.img_url) {
+      throw new ConflictException('La imagen del producto es obligatoria');
+    }
+    
     const partial: DeepPartial<Producto> = {
       nombre: dto.nombre,
       tipo: dto.tipo,
       precio: dto.precio,
-      // solo incluimos img_url si vino; si vino null, guardamos null
-      ...(dto.img_url !== undefined ? { img_url: dto.img_url } : {}),
+      img_url: dto.img_url,
       activo: dto.activo ?? 1,
     };
 
@@ -84,4 +91,5 @@ export class ProductosService {
     p.activo = 1;
     return this.repo.save(p);
   }
+  
 }

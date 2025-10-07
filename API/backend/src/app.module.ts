@@ -7,7 +7,9 @@ import { CajaModule } from './caja/caja.module';
 import { PedidosModule } from './pedidos/pedidos.module';
 import { GastosModule } from './gastos/gastos.module';
 import { UsersModule } from './usuarios/usuarios.module';
-// import { ReportesModule } from './reportes/reportes.module';
+import { InventarioModule } from './inventario/inventario.module';
+import { ReportesModule } from './reportes/reportes.module';
+import { RecetasModule } from './recetas/recetas.module';
 
 @Module({
   imports: [
@@ -19,7 +21,9 @@ import { UsersModule } from './usuarios/usuarios.module';
     ProductosModule,
     PedidosModule,
     GastosModule,
-    // ReportesModule,
+    ReportesModule,
+    InventarioModule,
+    RecetasModule,
   ],
 })
 export class AppModule {}
