@@ -15,6 +15,9 @@ export enum EstadoPedido { PENDIENTE = 'PENDIENTE', LISTO = 'LISTO' }
 export class Pedido {
   @PrimaryGeneratedColumn({ name: 'id_pedido' })
   id_pedido: number;
+  
+  @Column({ type: 'int', name: 'num_pedido' })
+  num_pedido: number;
 
   // FK: id_usuario
   @ManyToOne(() => Usuario, (u) => u.pedidos, { nullable: false, onDelete: 'RESTRICT' })

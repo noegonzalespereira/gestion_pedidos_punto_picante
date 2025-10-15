@@ -1,7 +1,6 @@
-// src/productos/dto/update-producto.dto.ts
 import { IsEnum, IsOptional, IsString, MaxLength, IsDecimal, IsInt, IsIn } from 'class-validator';
 import { TipoProducto } from '../producto.entity';
-
+import { Transform } from 'class-transformer';
 export class UpdateProductoDto {
   @IsOptional() @IsString() @MaxLength(120) nombre?: string;
   @IsOptional() @IsEnum(TipoProducto) tipo?: TipoProducto;
@@ -11,6 +10,9 @@ export class UpdateProductoDto {
   @IsOptional() @IsString()
   img_url?: string | null;
 
-  @IsOptional() @IsInt() @IsIn([0,1])
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsOptional()
+  @IsInt()
+  @IsIn([0, 1])
   activo?: 0 | 1;
 }

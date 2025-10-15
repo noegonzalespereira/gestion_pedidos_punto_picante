@@ -1,4 +1,4 @@
-import { IsArray, ArrayMinSize, IsEnum, IsInt, IsOptional, IsPositive, ValidateNested } from 'class-validator';
+import { IsArray, ArrayMinSize, IsEnum, IsInt, IsOptional, IsPositive, ValidateNested, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
 import { MetodoPago, TipoPedido } from '../pedido.entity';
 import { DestinoItem } from '../detalle-pedido.entity';
@@ -22,7 +22,7 @@ export class CreatePedidoDto {
   @IsEnum(TipoPedido)
   tipo_pedido: TipoPedido;
 
-  @IsOptional() @IsInt()
+  @IsOptional() @IsInt() @Min(1) @Max(10)
   num_mesa?: number | null;
  
   @IsEnum(MetodoPago)

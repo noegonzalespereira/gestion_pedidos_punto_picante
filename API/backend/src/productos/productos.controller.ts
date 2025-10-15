@@ -37,11 +37,21 @@ export class ProductosController {
   }
   
 
-  @Patch(':id')
-  @Roles('GERENTE')
-  update(@Param('id') id: string, @Body() dto: UpdateProductoDto) {
-    return this.service.update(Number(id), dto);
+@Patch(':id')
+@Roles('GERENTE')
+@UseInterceptors(FileInterceptor('file'))
+async update(
+  @Param('id') id: string,
+  @UploadedFile() file: Express.Multer.File,
+  @Body() dto: UpdateProductoDto
+) {
+  if (file) {
+    const url = await this.service['cloudinary'].uploadImage(file);
+    dto.img_url = url; // la imagen se guarda en Cloudinary
   }
+  return this.service.update(Number(id), dto);
+}
+
 
   @Delete(':id')
   @Roles('GERENTE')

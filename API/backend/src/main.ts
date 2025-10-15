@@ -7,9 +7,10 @@ async function bootstrap() {
 
   // CORS: permite llamadas desde tu app Flutter (móvil y web)
   app.enableCors({
-    origin: true, // en producción especifica tus orígenes permitidos
+    origin: ['http://localhost:5173'], // en producción especifica tus orígenes permitidos
+    credentials: false,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    credentials: true,
+    allowedHeaders: 'Content-Type,Authorization',
   });
 
   // Validación global de DTOs

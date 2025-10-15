@@ -178,4 +178,51 @@ export class CajaService {
       },
     };
   }
+  /**
+ * Lista todas las cajas con opción de filtrar por usuario o rango de fechas
+ * - Solo para GERENTE
+ */
+async historial(filtros: { cajeroId?: number; desde?: string; hasta?: string }) {
+  const qb = this.cajas
+    .createQueryBuilder('c')
+    .innerJoin('c.usuario', 'u')
+    .select([
+      'c.id_caja AS id_caja',
+      'u.nombre AS cajero',
+      'c.estado AS estado',
+      'c.monto_apertura AS monto_apertura',
+      'c.monto_cierre AS monto_cierre',
+      'c.fecha_apertura AS fecha_apertura',
+      'c.fecha_cierre AS fecha_cierre',
+    ])
+    .orderBy('c.fecha_apertura', 'DESC');
+
+  if (filtros.cajeroId) {
+    qb.andWhere('c.id_usuario = :id', { id: filtros.cajeroId });
+  }
+
+  if (filtros.desde && filtros.hasta) {
+    qb.andWhere('DATE(c.fecha_apertura) BETWEEN :desde AND :hasta', {
+      desde: filtros.desde,
+      hasta: filtros.hasta,
+    });
+  } else if (filtros.desde) {
+    qb.andWhere('DATE(c.fecha_apertura) >= :desde', { desde: filtros.desde });
+  } else if (filtros.hasta) {
+    qb.andWhere('DATE(c.fecha_apertura) <= :hasta', { hasta: filtros.hasta });
+  }
+
+  const cajas = await qb.getRawMany();
+
+  return cajas.map((c) => ({
+    id_caja: Number(c.id_caja),
+    cajero: c.cajero,
+    estado: c.estado,
+    monto_apertura: Number(c.monto_apertura),
+    monto_cierre: c.monto_cierre ? Number(c.monto_cierre) : null,
+    fecha_apertura: c.fecha_apertura,
+    fecha_cierre: c.fecha_cierre,
+  }));
+}
+
 }

@@ -1,4 +1,4 @@
-import { IsEnum, IsOptional, IsString, IsIn } from 'class-validator';
+import { IsEnum, IsOptional, IsString, IsNumberString } from 'class-validator';
 import { TipoProducto } from '../producto.entity';
 
 export class QueryProductosDto {
@@ -11,8 +11,8 @@ export class QueryProductosDto {
   tipo?: TipoProducto;           // PLATO | BEBIDA
 
   @IsOptional()
-  @IsIn([0, 1] as any)
-  activo?: 0 | 1;                // 1=activos, 0=inactivos
+  @IsNumberString()
+  activo?: string;  // '0' o '1' desde query params              // 1=activos, 0=inactivos
 
   @IsOptional()
   page?: number;

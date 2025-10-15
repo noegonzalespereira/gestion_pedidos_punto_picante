@@ -1,6 +1,6 @@
-import { IsEnum, isNotEmpty, IsString, MaxLength, IsDecimal, IsInt, IsIn, IsNotEmpty } from 'class-validator';
+import { IsEnum, isNotEmpty, IsString, MaxLength, IsDecimal, IsInt, IsIn, IsNotEmpty, IsOptional } from 'class-validator';
 import { TipoProducto } from '../producto.entity';
-
+import { Transform } from 'class-transformer';
 export class CreateProductoDto {
   @IsString() @MaxLength(120) @IsNotEmpty() 
   nombre!: string;
@@ -9,9 +9,11 @@ export class CreateProductoDto {
   @IsDecimal({ decimal_digits: '0,2' }) @IsNotEmpty()
   precio!: string;
 
-  @IsNotEmpty() @IsString() 
+  @IsOptional() @IsString() 
   img_url?: string | null;
 
-  @IsInt() @IsIn([0,1])
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @IsIn([0, 1])
   activo?: 0 | 1;
 }

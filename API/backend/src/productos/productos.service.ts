@@ -18,9 +18,10 @@ export class ProductosService {
 
     const exists = await this.repo.findOne({ where: { nombre: dto.nombre } });
     if (exists) throw new ConflictException('Ya existe un producto con ese nombre');
-    if (!dto.img_url) {
-      throw new ConflictException('La imagen del producto es obligatoria');
+    if (!dto.img_url || dto.img_url === '') {
+      dto.img_url = null;
     }
+
     
     const partial: DeepPartial<Producto> = {
       nombre: dto.nombre,

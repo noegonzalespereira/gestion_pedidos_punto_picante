@@ -7,7 +7,9 @@ import {
   Post,
   Req,
   UseGuards,
+  Query,
 } from '@nestjs/common';
+
 import { CajaService } from './caja.service';
 import { OpenCajaDto } from './dto/open-caja.dto';
 import { CloseCajaDto } from './dto/close-caja.dto';
@@ -50,4 +52,24 @@ export class CajaController {
   resumen(@Param('id') id: string) {
     return this.service.resumen(Number(id));
   }
+  /** 
+ * Historial de cajas (solo GERENTE)
+ * Permite filtrar por cajero y rango de fechas
+ * Ejemplo: /api/cajas/historial?cajero=3&desde=2025-10-01&hasta=2025-10-14
+ */
+@Get('historial')
+@Roles('GERENTE')
+async historial(
+  @Req() req: any,
+  @Query('cajero') cajero?: string,
+  @Query('desde') desde?: string,
+  @Query('hasta') hasta?: string,
+) {
+  return this.service.historial({
+    cajeroId: cajero ? Number(cajero) : undefined,
+    desde,
+    hasta,
+  });
+}
+
 }

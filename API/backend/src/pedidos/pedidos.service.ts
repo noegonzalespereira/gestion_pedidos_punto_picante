@@ -145,7 +145,16 @@ export class PedidosService {
 
     if (dto.tipo_pedido === TipoPedido.MESA && !dto.num_mesa)
       throw new BadRequestException('num_mesa es obligatorio para MESA');
-
+    const hoy = this.ymd(new Date());
+    const inicioDia = new Date(hoy + ' 00:00:00');
+    const finDia = new Date(hoy + ' 23:59:59');
+    
+    const ultimoPedidoHoy = await this.pedidos.findOne({
+      where: { created_at: Between(inicioDia, finDia) },
+      order: { num_pedido: 'DESC' }
+    });
+    
+    const num_pedido = ultimoPedidoHoy ? ultimoPedidoHoy.num_pedido + 1 : 1;
     const ids = [...new Set(dto.items.map((i) => i.id_producto))];
     const precioPorId = await this.preciosPorId(ids);
 
@@ -165,6 +174,7 @@ export class PedidosService {
         }
       }
       const pedido = await qr.manager.save(Pedido, {
+        num_pedido,
         usuario: { id_usuario: userId },
         caja: { id_caja: dto.id_caja },
         tipo_pedido: dto.tipo_pedido,
@@ -197,7 +207,7 @@ export class PedidosService {
       const {tipo_final,convertidoAMixto}= await this.validarTipo_Y_Mesa(pedido.id_pedido, qr.manager);
       const total = await this.recalcularTotal(pedido.id_pedido, qr.manager);
       await qr.commitTransaction();
-      return { id_pedido: pedido.id_pedido, total,tipo_pedido: tipo_final, convertidoAMixto };
+      return { id_pedido: pedido.id_pedido,num_pedido: pedido.num_pedido ,total,tipo_pedido: tipo_final, convertidoAMixto };
     } catch (e) {
       await qr.rollbackTransaction();
       // si falló DB, revertimos la reserva
