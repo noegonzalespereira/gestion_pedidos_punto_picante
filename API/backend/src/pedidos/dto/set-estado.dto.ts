@@ -1,7 +1,7 @@
 import { IsEnum } from 'class-validator';
-import { EstadoPedido } from '../pedido.entity';
+import { EstadoItem } from '../detalle-pedido.entity';
 
 export class SetEstadoDto {
-  @IsEnum(EstadoPedido)
-  estado: EstadoPedido;
+  @IsEnum(EstadoItem)
+  estado_item: EstadoItem;
 }

@@ -7,7 +7,7 @@ export class CloudinaryService {
   async uploadImage(file: Express.Multer.File): Promise<string> {
     return new Promise((resolve, reject) => {
       const upload = cloudinary.uploader.upload_stream(
-        { folder: 'productos' }, // carpeta en tu cuenta Cloudinary
+        { folder: 'productos' }, 
         (error, result) => {
           if (error) {
             return reject(error);

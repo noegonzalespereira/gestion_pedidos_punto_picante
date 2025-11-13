@@ -1,7 +1,7 @@
 import { IsArray, IsEnum, IsInt, IsOptional, IsPositive, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { MetodoPago, TipoPedido } from '../pedido.entity';
-import { DestinoItem } from '../detalle-pedido.entity';
+import { DestinoItem,EstadoItem } from '../detalle-pedido.entity';
 class ItemUpdDto {
   @IsInt() @IsPositive()
   id_producto: number;
@@ -13,7 +13,9 @@ class ItemUpdDto {
   notas?: string | null;
 
   @IsOptional() @IsEnum(DestinoItem)
-  destino?: DestinoItem
+  destino?: DestinoItem | null;
+  @IsOptional() @IsEnum(EstadoItem)
+  estado_item?: EstadoItem;
 }
 
 export class UpdatePedidoDto {

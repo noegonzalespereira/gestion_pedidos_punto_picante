@@ -4,6 +4,8 @@ import {
 import { Pedido } from './pedido.entity';
 import { Producto } from '../productos/producto.entity';
 export enum DestinoItem {MESA='MESA',LLEVAR='LLEVAR'}
+export enum EstadoItem { PENDIENTE = 'PENDIENTE', LISTO = 'LISTO' }
+
 @Entity('detalles_pedido')
 export class DetallePedido {
   @PrimaryGeneratedColumn({ name: 'id_detalle_pedido' })
@@ -36,6 +38,9 @@ export class DetallePedido {
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   subtotal: string; // cantidad * precio_unitario
-  @Column({type:'enum',enum:DestinoItem,name:'destiono',default:DestinoItem.MESA})
-  destino:DestinoItem;
+  @Column({ type: 'enum', enum: DestinoItem, name: 'destino', nullable: false })
+  destino: DestinoItem;
+  @Column({ type: 'enum', enum: EstadoItem, default: EstadoItem.PENDIENTE, name: 'estado_item' })
+  estado_item: EstadoItem;
+
 }

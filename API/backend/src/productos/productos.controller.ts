@@ -6,6 +6,7 @@ import { QueryProductosDto } from './dto/query-producto.dto';
 import { JwtAuthGuard, RolesGuard, Roles } from '../auth/guards';
 
 import { FileInterceptor } from '@nestjs/platform-express';
+import { TipoProducto } from './producto.entity';
 @Controller('productos')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ProductosController {
@@ -59,11 +60,20 @@ async update(
     return this.service.remove(Number(id));
   }
 
-  /** Activar nuevamente */
+  /** Activar  */
   @Patch(':id/activar')
   @Roles('GERENTE')
   activar(@Param('id') id: string) {
     return this.service.activar(Number(id));
   }
-}
 
+
+@Get('tipo/:tipo')
+@Roles('GERENTE', 'CAJERO', 'COCINA')
+listByType(@Param('tipo') tipo: TipoProducto) {
+  if (!['PLATO', 'NORMAL', 'BEBIDA'].includes(tipo)) {
+      throw new BadRequestException('Tipo de producto inválido');
+  }
+  return this.service.findByType(tipo);
+}
+}

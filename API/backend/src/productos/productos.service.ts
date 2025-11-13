@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ConflictException} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Like, Repository, DeepPartial } from 'typeorm';
-import { Producto } from './producto.entity';
+import { Producto, TipoProducto } from './producto.entity';
 import { CreateProductoDto } from './dto/create-producto.dto';
 import { UpdateProductoDto } from './dto/update-producto.dto';
 import { QueryProductosDto } from './dto/query-producto.dto';
@@ -92,5 +92,13 @@ export class ProductosService {
     p.activo = 1;
     return this.repo.save(p);
   }
+  async findByType(tipo: TipoProducto) {
+    return this.repo.find({
+        where: { tipo, activo: 1 },
+        select: ['id_producto', 'nombre'], // Solo necesitamos ID y Nombre
+        order: { nombre: 'ASC' },
+    });
+}
+  
   
 }

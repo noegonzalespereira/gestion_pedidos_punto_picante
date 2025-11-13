@@ -49,7 +49,7 @@ export class CajaService {
     return this.cajas.save(caja);
   }
 
-  /** Devuelve la caja ABIERTA del usuario actual (si existe) */
+  /** Devuelve la caja ABIERTA del usuario actual  */
   async cajaAbiertaDe(userId: number) {
     return this.cajas.findOne({
       where: { id_usuario: userId, estado: EstadoCaja.ABIERTA },
@@ -68,7 +68,18 @@ export class CajaService {
     if (rol === 'CAJERO' && caja.id_usuario !== userId) {
       throw new ForbiddenException('No puedes cerrar cajas de otros usuarios');
     }
+    //Verificar si hay pedidos NO pagados asociados a esta caja
+    const pedidosNoPagados = await this.pedidos.count({
+      where: { caja: { id_caja }, estado_pago: EstadoPago.SIN_PAGAR },
+    });
 
+    if (pedidosNoPagados > 0) {
+      throw new BadRequestException(
+        `No se puede cerrar la caja. Existen ${pedidosNoPagados} pedido(s) sin pagar.`
+      );
+    }
+
+    
     caja.estado = EstadoCaja.CERRADA;
     caja.fecha_cierre = new Date();
     if (dto.monto_cierre !== undefined) {
@@ -188,7 +199,7 @@ async historial(filtros: { cajeroId?: number; desde?: string; hasta?: string }) 
     .innerJoin('c.usuario', 'u')
     .select([
       'c.id_caja AS id_caja',
-      'u.nombre AS cajero',
+      'u.nombre AS usuario_nombre',
       'c.estado AS estado',
       'c.monto_apertura AS monto_apertura',
       'c.monto_cierre AS monto_cierre',
@@ -216,7 +227,7 @@ async historial(filtros: { cajeroId?: number; desde?: string; hasta?: string }) 
 
   return cajas.map((c) => ({
     id_caja: Number(c.id_caja),
-    cajero: c.cajero,
+    cajero: c.usuario_nombre,
     estado: c.estado,
     monto_apertura: Number(c.monto_apertura),
     monto_cierre: c.monto_cierre ? Number(c.monto_cierre) : null,

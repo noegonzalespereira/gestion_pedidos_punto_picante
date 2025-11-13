@@ -38,4 +38,15 @@ export class InventarioController {
   merma(@Body() dto: MermaDto) {
     return this.service.merma(dto);
   }
+  @Get('merma')
+  @Roles('GERENTE')
+  listarMermas() {
+    return this.service.listarMermas();
+  }
+  // Obtener desglose de stock del día (platos + bebidas)
+  @Get('disponible-detalles')
+  @Roles('GERENTE', 'CAJERO', 'COCINA')
+  getDesgloseStockDelDia(@Query('fecha') fecha: string) {
+      return this.service.getDesgloseStockDelDia(fecha);
+  }
 }

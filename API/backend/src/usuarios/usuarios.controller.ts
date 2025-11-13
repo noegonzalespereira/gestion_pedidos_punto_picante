@@ -31,11 +31,14 @@ export class UsersController {
 
   @Post()
   create(@Body() dto: CreateUserDto) {
+    console.log("Datos recibidos para crear usuario:", dto);
     return this.service.create(dto);
+
   }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
+    console.log("Datos recibidos para actualizar usuario:", dto); 
     return this.service.update(+id, dto);
   }
 

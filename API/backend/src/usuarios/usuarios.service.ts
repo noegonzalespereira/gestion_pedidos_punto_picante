@@ -13,14 +13,20 @@ import * as bcrypt from 'bcrypt';
 @Injectable()
 export class UsersService {
   constructor(@InjectRepository(Usuario) private repo: Repository<Usuario>) {}
-
   async findAll() {
   
-    return this.repo.find({
-      select: ['id_usuario', 'nombre', 'email', 'rol', 'created_at'],
-      order: { id_usuario: 'DESC' },
-    });
+   return this.repo.find({
+     select: ['id_usuario', 'nombre', 'email', 'rol', 'created_at'],
+     order: { id_usuario: 'DESC' },
+   });
   }
+  // async findAll() {
+  
+  //   return this.repo.find({
+  //     select: ['id_usuario', 'nombre', 'email', 'rol', 'created_at'],
+  //     order: { id_usuario: 'DESC' },
+  //   });
+  // }
 
   async findOne(id: number) {
     const user = await this.repo.findOne({
@@ -41,6 +47,7 @@ export class UsersService {
   }
 
   async create(dto: CreateUserDto) {
+    console.log("Crear usuario:", dto); 
     // Verifica email único
     const exists = await this.repo.findOne({ where: { email: dto.email } });
     if (exists) throw new ConflictException('Email ya registrado');
@@ -62,6 +69,7 @@ export class UsersService {
   }
 
   async update(id: number, dto: UpdateUserDto) {
+    console.log("Actualizar usuario:", dto);
     const user = await this.repo.findOne({ where: { id_usuario: id } });
     if (!user) throw new NotFoundException('Usuario no encontrado');
 

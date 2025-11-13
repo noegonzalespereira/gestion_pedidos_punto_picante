@@ -10,18 +10,46 @@ import { UpdateItemDto } from './dto/update-item.dto';
 import { SetEstadoDto } from './dto/set-estado.dto';
 import { PagarDto } from './dto/pagar.dto';
 import { JwtAuthGuard, RolesGuard, Roles } from '../auth/guards';
+import { EstadoPedido } from './pedido.entity';
 
 @Controller('pedidos')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class PedidosController {
   constructor(private readonly service: PedidosService) {}
 
-  /** Feed para cocina (polling) — poner ANTES de :id */
-  @Get('cocina/pendientes')
-  @Roles('COCINA', 'GERENTE')
-  cocinaPendientes(@Query('desde') desde?: string) {
-    return this.service.listaParaCocina(desde);
-  }
+  
+
+
+@Get('cocina')
+@Roles('COCINA', 'GERENTE')
+async cocinaLista(
+  @Query('id_caja') id_caja?: string,
+  @Query('estado') estado?: EstadoPedido,
+  @Query('desde') desde?: string,
+) {
+  return this.service.listaParaCocinaPorCaja({
+    id_caja: id_caja ? Number(id_caja) : undefined,
+    estado,
+    desde,
+  });
+}
+
+@Get('cocina/listos')
+@Roles('COCINA', 'GERENTE')
+async cocinaListos(@Query('id_caja') id_caja?: string) {
+  return this.service.listaParaCocinaPorCaja({
+    id_caja: id_caja ? Number(id_caja) : undefined,
+    estado: EstadoPedido.LISTO,
+  });
+}
+
+@Get('cocina/resumen')
+@Roles('COCINA', 'GERENTE')
+async cocinaResumen(@Query('id_caja') id_caja?: string) {
+  return this.service.resumenCocinaPorCaja(id_caja ? Number(id_caja) : undefined);
+}
+
+
 
   /** Listar */
   @Get()
@@ -38,6 +66,7 @@ export class PedidosController {
   @Post()
   @Roles('CAJERO', 'GERENTE')
   crear(@Req() req: any, @Body() dto: CreatePedidoDto) {
+    console.log('DTO recibido:', dto);
     return this.service.crear(req.user.userId, req.user.rol, dto);
   }
 
@@ -77,11 +106,13 @@ export class PedidosController {
   }
 
   /** Cambiar estado del pedido — COCINA/GERENTE */
-  @Patch(':id/estado-pedido')
+  @Patch(':id/items/:detalleId/listo')
   @Roles('COCINA', 'GERENTE')
-  estado(@Param('id') id: string, @Body() dto: SetEstadoDto) {
-    return this.service.setEstadoPedido(Number(id), dto.estado);
+  marcarItemDespachado(@Param('detalleId') detalleId: string) {
+    return this.service.marcarItemListo(Number(detalleId));
   }
+  
+ 
 
   /** Pagar — CAJERO/GERENTE */
   @Patch(':id/pagar')

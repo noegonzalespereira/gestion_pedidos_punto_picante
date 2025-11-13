@@ -95,6 +95,7 @@ export class RecetasService {
   }
 
   async listarInsumos() {
+    
     return this.insumoRepo.find({ order: { nombre: 'ASC' } });
   }
 
@@ -115,6 +116,17 @@ export class RecetasService {
     const saved = await this.costoRepo.save(entity);
     return saved;
   }
+  //historial de costos de insumo
+  async getHistorialCostos(id_insumo: number) {
+    const insumo = await this.insumoRepo.findOne({ where: { id_insumo } });
+    if (!insumo) throw new NotFoundException('Insumo no encontrado');
+
+    return this.costoRepo.find({
+        where: { insumo: { id_insumo } as any },
+        relations: { insumo: true }, // Opcional, pero útil para obtener la unidad base
+        order: { vigencia_desde: 'DESC', created_at: 'DESC' },
+    });
+}
 
   // ===================== Receta (por plato) =====================
 
@@ -165,6 +177,7 @@ export class RecetasService {
 
     return this.getReceta(dto.id_producto);
   }
+
 
   /** Devuelve la receta de un plato con costo vigente y total */
   async getReceta(id_producto: number, fecha?: string) {
@@ -221,4 +234,62 @@ export class RecetasService {
   async costoPlato(id_producto: number, fecha?: string) {
     return this.getReceta(id_producto, fecha);
   }
+
+// recetas.service.ts (Función listarResumenRecetas FINALMENTE CORREGIDA)
+
+async listarResumenRecetas() {
+    const platosConReceta = await this.recetaRepo
+        .createQueryBuilder('r')
+        .select('r.id_producto', 'platoId') 
+        .groupBy('r.id_producto') 
+        .getRawMany();
+
+    const idsPlatos = platosConReceta
+        .map(p => Number(p.platoId)) 
+        .filter(id => !isNaN(id) && id > 0);
+    
+    // 🚨 PASO DE DEBUG CRÍTICO 🚨
+    // Antes de iterar, verificamos qué IDs quedaron
+    console.log('--- Debug IDs Platos ---');
+    console.log('Platos crudos de la DB:', platosConReceta);
+    console.log('IDs después del filtro (debe ser [1, 2, ...]):', idsPlatos);
+
+        if (idsPlatos.length === 0) {
+            return [];
+        }
+        
+        const resultados: any[] = [];
+        
+        // 3. Iteramos sobre los IDs válidos
+        for (const id_producto of idsPlatos) {
+            try{
+                // getReceta hará la consulta principal usando este ID
+                const recetaData = await this.getReceta(id_producto); 
+                
+                // Obtenemos la última actualización
+                const ultimaReceta = await this.recetaRepo.findOne({
+                    where: { producto: { id_producto } as any },
+                    order: { created_at: 'DESC' },
+                });
+
+                resultados.push({
+                    id_producto: recetaData.id_producto,
+                    nombre: recetaData.producto,
+                    ingredientes_count: recetaData.items.length, 
+                    costo_teorico: Number(recetaData.costo_teorico_total).toFixed(2), 
+                    ultima_actualizacion: ultimaReceta?.created_at.toISOString() || new Date().toISOString(),
+                });
+            } catch (e) {
+                // Captura fallos individuales de getReceta (ej. producto eliminado)
+                console.error(`Error al procesar resumen para ID ${id_producto}:`, e);
+            }
+        }
+
+        return resultados;
+    } catch (dbError) {
+        // Captura cualquier fallo de la consulta SQL inicial (ej. columna mal escrita)
+        console.error("ERROR GRAVE EN listarResumenRecetas SQL:", dbError);
+        throw new NotFoundException('Fallo al generar el resumen de recetas (Error interno del servidor)');
+    }
 }
+

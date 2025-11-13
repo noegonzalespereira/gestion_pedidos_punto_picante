@@ -1,5 +1,5 @@
 import { IsInt, IsOptional, IsPositive, ValidateIf, IsString,IsEnum } from 'class-validator';
-import { DestinoItem } from '../detalle-pedido.entity';
+import { DestinoItem,EstadoItem} from '../detalle-pedido.entity';
 
 export class UpdateItemDto {
   @IsOptional() @IsInt() @IsPositive()
@@ -12,4 +12,8 @@ export class UpdateItemDto {
 
   @IsOptional() @IsEnum(DestinoItem)
   destino?: DestinoItem;
+  
+  @IsOptional()
+  @IsEnum(EstadoItem)
+  estado_item?: EstadoItem;
 }

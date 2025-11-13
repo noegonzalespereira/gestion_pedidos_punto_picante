@@ -21,25 +21,34 @@ export class GastosService {
     @InjectRepository(Caja) private readonly cajas: Repository<Caja>,
   ) {}
 
-  // Convierte a 'YYYY-MM-DD' para columna DATE
   private toYMD(v?: string): string {
-    const toYMD = (d: Date) => {
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${y}-${m}-${day}`;
-    };
-    if (!v) return toYMD(new Date());
-    const d = new Date(v);
-    if (isNaN(d.getTime())) throw new BadRequestException('Fecha inválida');
-    return toYMD(d);
+  const pad = (n: number) => String(n).padStart(2, '0');
+
+  // Si no envían fecha -> hoy local
+  if (!v) {
+    const now = new Date();
+    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
   }
 
-  private parseDateMaybe(value?: string): Date | undefined {
+  // Si ya viene como 'YYYY-MM-DD', úsala tal cual (¡no convertir con Date!)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+
+  // Si viene con hora, recién parseamos y formateamos en LOCAL
+  const d = new Date(v);
+  if (isNaN(d.getTime())) throw new BadRequestException('Fecha inválida');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+
+  private parseDateMaybe(value?: string): string| undefined {
     if (!value) return undefined;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
     const d = new Date(value);
     if (isNaN(d.getTime())) throw new BadRequestException('Fecha inválida');
-    return d;
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
   }
 
   async create(userId: number, userRol: RolUsuario, dto: CreateGastoDto) {
@@ -89,23 +98,31 @@ export class GastosService {
     page?: number;
     pageSize?: number;
   }) {
-    // Build where para findAndCount (soporta anidado en 0.3.x)
+    
     const where: any = {};
     if (query.caja) where.caja = { id_caja: query.caja };
 
     const d1 = this.parseDateMaybe(query.desde);
     const d2 = this.parseDateMaybe(query.hasta);
-    if (d1 && d2) {
-      const end = new Date(d2);
-      if (end.getHours() === 0 && end.getMinutes() === 0) end.setHours(23, 59, 59, 999);
-      where.fecha = Between(d1, end);
-    } else if (d1) {
-      where.fecha = MoreThanOrEqual(d1);
-    } else if (d2) {
-      const end = new Date(d2);
-      if (end.getHours() === 0 && end.getMinutes() === 0) end.setHours(23, 59, 59, 999);
-      where.fecha = LessThanOrEqual(end);
+    // por defecto mostrar el ultimo dia de gastos
+    if (!d1 && !d2) {
+    const ultima = await this.repo
+      .createQueryBuilder('g')
+      .select('MAX(g.fecha)', 'ultima')
+      .getRawOne<{ ultima: string }>();
+
+    if (ultima?.ultima) {
+      where.fecha = Between(ultima.ultima, ultima.ultima);
     }
+    } else if (d1 && d2) {
+    where.fecha = Between(d1, d2);
+   
+  } else if (d1) {
+    where.fecha = MoreThanOrEqual(d1);
+  } else if (d2) {
+    where.fecha = MoreThanOrEqual(d2);
+  }
+    
 
     const page = Math.max(1, Number(query.page ?? 1));
     const pageSize = Math.max(1, Math.min(100, Number(query.pageSize ?? 20)));
@@ -121,8 +138,9 @@ export class GastosService {
       ...g,
       total: (Number(g.precio) * g.cantidad).toFixed(2),
     }));
-
+    
     return { total, page, pageSize, data };
+
   }
 
   async update(userRol: RolUsuario, id_gasto: number, dto: UpdateGastoDto) {
@@ -176,16 +194,36 @@ export class GastosService {
     const d1 = this.parseDateMaybe(query.desde);
     const d2 = this.parseDateMaybe(query.hasta);
     if (d1 && d2) {
-      const end = new Date(d2);
-      if (end.getHours() === 0 && end.getMinutes() === 0) end.setHours(23, 59, 59, 999);
-      qb.andWhere('g.fecha BETWEEN :ini AND :fin', { ini: d1, fin: end });
-    } else if (d1) qb.andWhere('g.fecha >= :ini', { ini: d1 });
-    else if (d2) {
-      const end = new Date(d2);
-      if (end.getHours() === 0 && end.getMinutes() === 0) end.setHours(23, 59, 59, 999);
-      qb.andWhere('g.fecha <= :fin', { fin: end });
-    }
+      qb.andWhere('g.fecha BETWEEN :ini AND :fin', { ini: d1, fin: d2 });
+      // const rawUlt = await this.repo
+      // .createQueryBuilder('x')
+      // .select('MAX(x.fecha)', 'ultima')
+      // .getRawOne<{ ultima: string }>();
+    // if (rawUlt?.ultima) {
+    //   qb.andWhere('g.fecha BETWEEN :ini AND :fin', { ini: rawUlt.ultima, fin: rawUlt.ultima });
+    //}
+    } else if (d1 && d2) {
+    qb.andWhere('g.fecha BETWEEN :ini AND :fin', { ini: d1, fin: d2 });
+  } else if (d1) {
+    qb.andWhere('g.fecha >= :ini', { ini: d1 });
+  } else if (d2) {
+    qb.andWhere('g.fecha <= :fin', { fin: d2 });
+  }else{
+    const rawUlt = await this.repo
+      .createQueryBuilder('x')
+      .select('MAX(x.fecha)', 'ultima')
+      .getRawOne<{ ultima: string }>();
 
+    if (!rawUlt?.ultima) {
+      return { total_gastos: '0.00', num_gastos: 0 };
+    }
+    qb.andWhere('g.fecha BETWEEN :ini AND :fin', {
+      ini: rawUlt.ultima,
+      fin: rawUlt.ultima,
+    });
+  }
+
+  
     const raw =
       (await qb
         .select('COALESCE(SUM(g.precio * g.cantidad), 0)', 'sum')

@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  Req,
   Patch,
   Post,
   Query,
@@ -75,6 +76,11 @@ export class RecetasController {
   setCosto(@Body() dto: CostoInsumoDto) {
     return this.recetas.setCostoInsumo(dto);
   }
+  @Get('costos/:idInsumo')
+  @Roles('GERENTE')
+  getHistorialCostos(@Param('idInsumo') idInsumo: string) {
+    return this.recetas.getHistorialCostos(Number(idInsumo));
+  }
 
   // ===== Receta por plato =====
 
@@ -90,5 +96,10 @@ export class RecetasController {
   @Roles('GERENTE')
   getReceta(@Param('id') id: string, @Query('fecha') fecha?: string) {
     return this.recetas.getReceta(Number(id), fecha);
+  }
+  @Get('resumen')
+  @Roles('GERENTE')
+  listarResumenRecetas() {
+    return this.recetas.listarResumenRecetas();
   }
 }

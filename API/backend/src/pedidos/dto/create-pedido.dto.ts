@@ -1,7 +1,7 @@
-import { IsArray, ArrayMinSize, IsEnum, IsInt, IsOptional, IsPositive, ValidateNested, Min, Max } from 'class-validator';
+import { ValidateIf ,IsArray, ArrayMinSize, IsEnum, IsInt, IsOptional, IsPositive, ValidateNested, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
-import { MetodoPago, TipoPedido } from '../pedido.entity';
-import { DestinoItem } from '../detalle-pedido.entity';
+import { MetodoPago, TipoPedido,EstadoPago } from '../pedido.entity';
+import { DestinoItem,EstadoItem } from '../detalle-pedido.entity';
 class ItemDto {
   @IsInt() @IsPositive()
   id_producto: number;
@@ -11,8 +11,13 @@ class ItemDto {
 
   @IsOptional()
   notas?: string;
-  @IsOptional() @IsEnum(DestinoItem)
+
+  @IsOptional()
+  @IsEnum(DestinoItem)
   destino?: DestinoItem;
+  @IsOptional()
+  @IsEnum(EstadoItem)
+  estado_item?:EstadoItem;
 }
 
 export class CreatePedidoDto {
@@ -22,13 +27,23 @@ export class CreatePedidoDto {
   @IsEnum(TipoPedido)
   tipo_pedido: TipoPedido;
 
-  @IsOptional() @IsInt() @Min(1) @Max(10)
+  
+  @ValidateIf((o) => o.tipo_pedido !== TipoPedido.LLEVAR)
+  @IsInt()
+  @Min(1)
+  @Max(9)
   num_mesa?: number | null;
- 
+  @IsOptional()
   @IsEnum(MetodoPago)
-  metodo_pago: MetodoPago;
+  metodo_pago: MetodoPago | null;
 
-  @IsArray() @ArrayMinSize(1) @ValidateNested({ each: true })
+  @IsOptional()
+  @IsEnum(EstadoPago)
+  estado_pago?: EstadoPago;
+
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
   @Type(() => ItemDto)
   items: ItemDto[];
 }
