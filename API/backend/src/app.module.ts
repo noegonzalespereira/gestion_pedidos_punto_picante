@@ -9,7 +9,6 @@ import { GastosModule } from './gastos/gastos.module';
 import { UsersModule } from './usuarios/usuarios.module';
 import { InventarioModule } from './inventario/inventario.module';
 import { ReportesModule } from './reportes/reportes.module';
-import { RecetasModule } from './recetas/recetas.module';
 
 @Module({
   imports: [
@@ -23,7 +22,6 @@ import { RecetasModule } from './recetas/recetas.module';
     GastosModule,
     ReportesModule,
     InventarioModule,
-    RecetasModule,
   ],
 })
 export class AppModule {}

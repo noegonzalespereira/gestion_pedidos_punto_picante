@@ -26,6 +26,6 @@ export class InventarioMovimiento {
   @Column({ type: 'varchar', length: 200, nullable: true })
   motivo: string | null;
 
-  @CreateDateColumn({ name: 'created_at' })
+  @CreateDateColumn({ type: 'timestamp',name: 'created_at' })
   created_at: Date;
 }

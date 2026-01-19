@@ -11,8 +11,7 @@ import { DetallePedido } from '../pedidos/detalle-pedido.entity';
 import { Pedido } from '../pedidos/pedido.entity';
 import { Producto, TipoProducto } from '../productos/producto.entity';
 
-import { RecetaPlato } from '../recetas/receta-plato.entity';
-import { CostoInsumoHistorial } from '../recetas/costo-insumo.entity';
+
 
 import { InventarioMovimiento, TipoMovimiento } from '../inventario/inventario-mov.entity';
 import { InventarioProducto } from '../inventario/inventario-producto.entity';
@@ -37,8 +36,7 @@ export class ReportesService {
     @InjectRepository(DetallePedido) private readonly detRepo: Repository<DetallePedido>,
     @InjectRepository(Pedido) private readonly pedRepo: Repository<Pedido>,
     @InjectRepository(Producto) private readonly prodRepo: Repository<Producto>,
-    @InjectRepository(RecetaPlato) private readonly recetaRepo: Repository<RecetaPlato>,
-    @InjectRepository(CostoInsumoHistorial) private readonly costoRepo: Repository<CostoInsumoHistorial>,
+    
     @InjectRepository(InventarioMovimiento) private readonly movRepo: Repository<InventarioMovimiento>,
     @InjectRepository(InventarioProducto) private readonly invRepo: Repository<InventarioProducto>,
   ) {}
@@ -68,43 +66,7 @@ export class ReportesService {
     return undefined;
   }
 
-  // --- Costo teórico unitario de un PLATO en una fecha de referencia ---
-  // Suma: (cantidad_base * (1 + merma%/100)) * costo_unitario_insumo(vigente)
-  private async costoTeoricoPlatoUnitario(id_producto: number, fechaRefISO: string): Promise<number> {
-    // receta del producto
-    const receta = await this.recetaRepo.find({
-      where: { producto: { id_producto } },
-      relations: { insumo: true, producto: false },
-      order: { id_receta: 'ASC' },
-    });
-
-    if (!receta.length) return 0;
-
-    const fechaRef = new Date(fechaRefISO);
-    const costoUnit = async (id_insumo: number) => {
-      // último costo <= fechaRef
-      const row = await this.costoRepo
-        .createQueryBuilder('c')
-        .where('c.id_insumo = :id_insumo', { id_insumo })
-        .andWhere('c.vigencia_desde <= :f', { f: fechaRef })
-        .orderBy('c.vigencia_desde', 'DESC')
-        .limit(1)
-        .getOne();
-
-      return row ? Number(row.costo_unitario) : 0;
-    };
-
-    let total = 0;
-    for (const r of receta) {
-      const base = Number(r.cantidad_base);
-      const merma = Number(r.merma_porcentaje ?? 0) / 100;
-      const consumoNeto = base * (1 + merma); // criterio: sobreconsumo por merma
-      const cu = await costoUnit(r.insumo.id_insumo);
-      total += consumoNeto * cu;
-    }
-    return total; // número
-  }
-
+  
   // --- Ventas agrupadas por producto (unidades y ventas $) ---
   private async ventasAgrupadas(q: RangoFechasCaja) {
     const qb = this.detRepo
@@ -148,56 +110,6 @@ export class ReportesService {
       unidades: Number(r.unidades ?? 0),
       ventas: Number(r.ventas ?? 0),
     }));
-  }
-
-  // --- Reporte principal: Utilidad teórica ---
-  async utilidadTeorica(q: RangoFechasCaja) {
-    const rows = await this.ventasAgrupadas(q);
-    const fechaRef = q.hasta ?? new Date().toISOString().slice(0, 10);
-
-    const detalle: DetalleUtilidad[] = [];
-    let totalVentasNum = 0;
-    let totalCostoNum = 0;
-
-    for (const r of rows) {
-      const unidades = r.unidades;
-      const ventasNum = r.ventas;
-      totalVentasNum += ventasNum;
-
-      let costoUnit = 0;
-      if (r.tipo === TipoProducto.PLATO) {
-        costoUnit = await this.costoTeoricoPlatoUnitario(r.id_producto, fechaRef);
-      } else {
-        // Si más adelante defines costo de bebidas, cámbialo aquí.
-        costoUnit = 0;
-      }
-
-      const costoTotal = costoUnit * unidades;
-      totalCostoNum += costoTotal;
-
-      detalle.push({
-        id_producto: r.id_producto,
-        nombre: r.nombre,
-        tipo: r.tipo,
-        unidades,
-        ventas: ventasNum.toFixed(2),
-        costo_unitario_teorico: costoUnit.toFixed(4),
-        costo_total_teorico: costoTotal.toFixed(2),
-        margen: (ventasNum - costoTotal).toFixed(2),
-      });
-    }
-
-    return {
-      periodo: {
-        desde: q.desde ?? null,
-        hasta: q.hasta ?? null,
-        caja: q.caja ?? null,
-      },
-      total_ventas: totalVentasNum.toFixed(2),
-      total_costo_teorico: totalCostoNum.toFixed(2),
-      utilidad_teorica: (totalVentasNum - totalCostoNum).toFixed(2),
-      detalle,
-    };
   }
 
   // --- Resumen de mermas por producto ---

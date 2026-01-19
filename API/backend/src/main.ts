@@ -16,8 +16,8 @@ async function bootstrap() {
   // Validación global de DTOs
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,            // elimina campos no declarados en DTOs
-    forbidNonWhitelisted: true, // lanza error si llegan campos extra
-    transform: true,            // convierte tipos (string->number, etc.)
+    forbidNonWhitelisted: true, 
+    transform: true,          
   }));
 
   const port = process.env.PORT ? Number(process.env.PORT) : 3000;

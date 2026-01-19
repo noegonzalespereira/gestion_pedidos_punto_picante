@@ -52,10 +52,10 @@ export class Pedido {
   estado_pedido: EstadoPedido;
  
 
-  @CreateDateColumn({ name: 'created_at' })
+  @CreateDateColumn({ type: 'timestamp',name: 'created_at' })
   created_at: Date;
 
-  @UpdateDateColumn({ name: 'updated_at' })
+  @UpdateDateColumn({ type: 'timestamp',name: 'updated_at' })
   updated_at: Date;
 
   @OneToMany(() => DetallePedido, (d) => d.pedido, {

@@ -16,7 +16,7 @@ export class Gasto {
   @PrimaryGeneratedColumn({ name: 'id_gasto' })
   id_gasto: number;
 
-  // ====== Usuario (FK: id_usuario) ======
+  
   @ManyToOne(() => Usuario, (u) => u.gastos, { nullable: false, onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'id_usuario' })
   usuario: Usuario;
@@ -24,7 +24,7 @@ export class Gasto {
   @RelationId((g: Gasto) => g.usuario)
   readonly id_usuario: number;
 
-  // ====== Caja (FK: id_caja) ======
+ 
   @ManyToOne(() => Caja, (c) => c.gastos, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'id_caja' })
   caja?: Caja | null;
@@ -45,13 +45,13 @@ export class Gasto {
   @Column({ type: 'decimal', precision: 10, scale: 2, name: 'precio' })
   precio: string;
 
-  // Guardamos DATE => string 'YYYY-MM-DD'
+  
   @Column({ type: 'date', name: 'fecha' })
   fecha: string;
 
-  @CreateDateColumn({ name: 'created_at' })
+  @CreateDateColumn({ type:'timestamp',name: 'created_at' })
   created_at: Date;
 
-  @UpdateDateColumn({ name: 'updated_at' })
+  @UpdateDateColumn({ type:'timestamp',name: 'updated_at' })
   updated_at: Date;
 }

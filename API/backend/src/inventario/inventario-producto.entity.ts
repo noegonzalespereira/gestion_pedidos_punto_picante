@@ -12,8 +12,8 @@ import { Producto } from '../productos/producto.entity';
 import { InventarioMovimiento } from './inventario-mov.entity';
 
 export enum ModoInventario {
-  PLATO = 'PLATO',   // stock diario por fecha (cupo del día)
-  BEBIDA = 'BEBIDA', // stock global, fecha = NULL
+  PLATO = 'PLATO',   
+  BEBIDA = 'BEBIDA', 
 }
 
 @Entity('inventario_producto')
@@ -21,16 +21,13 @@ export class InventarioProducto {
   @PrimaryGeneratedColumn({ name: 'id_inventario' })
   id_inventario: number;
 
-  /** Relación al producto (FK id_producto) */
   @ManyToOne(() => Producto, { nullable: false, onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'id_producto' })
   producto: Producto;
 
-  /** Exponer el id sin duplicar columna */
   @RelationId((i: InventarioProducto) => i.producto)
   readonly id_producto: number;
 
-  /** Modo de control: PLATO o BEBIDA (tal como definiste en la BD) */
   @Column({ type: 'enum', enum: ModoInventario, name: 'modo' })
   modo: ModoInventario;
 
@@ -49,7 +46,7 @@ export class InventarioProducto {
   @Column({ type: 'text', name: 'notas', nullable: true })
   notas?: string | null;
 
-  @CreateDateColumn({ name: 'created_at' })
+  @CreateDateColumn({ type: 'timestamp',name: 'created_at' })
   created_at: Date;
 
   /** Movimientos asociados (INGRESO / MERMA) */

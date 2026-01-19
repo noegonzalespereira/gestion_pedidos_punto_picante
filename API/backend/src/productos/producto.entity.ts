@@ -11,8 +11,8 @@ export class Producto {
   @Column({ type: 'decimal', precision: 10, scale: 2 }) precio: string;
   @Column({ type: 'varchar', length: 255, nullable: true, name: 'img_url' })
   img_url: string | null;
-  @Column({ type: 'tinyint', default: 1 }) activo: number;
-  @CreateDateColumn({ name: 'created_at' }) created_at: Date;
+  @Column({ type: 'smallint', default: 1 }) activo: number;
+  @CreateDateColumn({ type: 'timestamp',name: 'created_at' }) created_at: Date;
 
   @OneToMany(() => DetallePedido, d => d.producto) detalles: DetallePedido[];
 }

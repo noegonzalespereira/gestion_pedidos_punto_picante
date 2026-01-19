@@ -19,7 +19,7 @@ export class ProductosService {
     const exists = await this.repo.findOne({ where: { nombre: dto.nombre } });
     if (exists) throw new ConflictException('Ya existe un producto con ese nombre');
     if (!dto.img_url || dto.img_url === '') {
-      dto.img_url = null;
+      dto.img_url = 'https://res.cloudinary.com/dbur21xsb/image/upload/v1763073517/productos/dwfxgdkzxbjmcjxzrzsq.png';
     }
 
     
@@ -69,10 +69,11 @@ export class ProductosService {
     if (dto.tipo !== undefined) p.tipo = dto.tipo;
     if (dto.precio !== undefined) p.precio = dto.precio;
 
-    if (dto.img_url !== undefined) {
-      // permite null para limpiar la URL
-      p.img_url = dto.img_url;
-    }
+    if (!dto.img_url || dto.img_url === '') {
+    p.img_url = 'https://res.cloudinary.com/dbur21xsb/image/upload/v1763073517/productos/dwfxgdkzxbjmcjxzrzsq.png';
+  } else {
+    p.img_url = dto.img_url;
+  }
 
     if (dto.activo !== undefined) p.activo = dto.activo;
 
@@ -95,7 +96,7 @@ export class ProductosService {
   async findByType(tipo: TipoProducto) {
     return this.repo.find({
         where: { tipo, activo: 1 },
-        select: ['id_producto', 'nombre'], // Solo necesitamos ID y Nombre
+        select: ['id_producto', 'nombre'], 
         order: { nombre: 'ASC' },
     });
 }

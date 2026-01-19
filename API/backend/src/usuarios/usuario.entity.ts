@@ -33,7 +33,7 @@ export class Usuario {
   @Column({ type: 'enum', enum: Rol })
   rol: Rol;
 
-  @CreateDateColumn({ name: 'created_at' })
+  @CreateDateColumn({type: 'timestamp', name: 'created_at' })
   created_at: Date;
 
   @OneToMany(() => Pedido, (p) => p.usuario)

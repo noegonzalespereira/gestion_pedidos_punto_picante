@@ -30,11 +30,14 @@ export class ProductosController {
   @UseInterceptors(FileInterceptor('file'))
   async create(@UploadedFile() file: Express.Multer.File, @Body() dto: CreateProductoDto) {
     if (!file) {
-      throw new BadRequestException('La imagen es obligatoria');
+      dto.img_url = 'https://res.cloudinary.com/dbur21xsb/image/upload/v1763073517/productos/dwfxgdkzxbjmcjxzrzsq.png'; 
+    } else {
+      // Si hay una imagen, la subimos a Cloudinary
+      const url = await this.service['cloudinary'].uploadImage(file);
+      dto.img_url = url;
     }
-    const url =await this.service['cloudinary'].uploadImage(file);
-    dto.img_url = url;
     return this.service.create(dto);
+   
   }
   
 
@@ -48,7 +51,7 @@ async update(
 ) {
   if (file) {
     const url = await this.service['cloudinary'].uploadImage(file);
-    dto.img_url = url; // la imagen se guarda en Cloudinary
+    dto.img_url = url; 
   }
   return this.service.update(Number(id), dto);
 }

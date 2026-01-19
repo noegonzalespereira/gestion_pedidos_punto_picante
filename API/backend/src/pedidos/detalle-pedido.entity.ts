@@ -19,7 +19,6 @@ export class DetallePedido {
   @RelationId((d: DetallePedido) => d.pedido)
   readonly id_pedido: number;
 
-  // FK: id_producto
   @ManyToOne(() => Producto, (pr) => pr.detalles, { nullable: false, onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'id_producto' })
   producto: Producto;
