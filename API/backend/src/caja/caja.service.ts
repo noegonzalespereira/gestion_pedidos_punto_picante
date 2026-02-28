@@ -111,7 +111,7 @@ export class CajaService {
       ])
       .where('p.id_caja = :id_caja', { id_caja })
       .andWhere('p.estado_pago = :pagado', { pagado: EstadoPago.PAGADO })
-      .andWhere('p.created_at BETWEEN :ini AND :fin', { ini: inicio, fin })
+      // .andWhere('p.created_at BETWEEN :ini AND :fin', { ini: inicio, fin })
       .getRawOne<{ total_vendido: string; total_efectivo: string; total_qr: string }>();
 
     // --- Gastos (se consideran salida de efectivo) ---
@@ -119,7 +119,7 @@ export class CajaService {
       .createQueryBuilder('g')
       .select("COALESCE(SUM(g.precio * g.cantidad), 0)", 'total_gastos')
       .where('g.id_caja = :id_caja', { id_caja })
-      .andWhere('g.fecha BETWEEN :ini AND :fin', { ini: inicio, fin })
+      // .andWhere('g.fecha BETWEEN :ini AND :fin', { ini: inicio, fin })
       .getRawOne<{ total_gastos: string }>();
 
     // --- Desglose por tipo de producto (solo pedidos PAGADOS) ---

@@ -510,53 +510,66 @@ export class PedidosService {
   }
 
   async listar(q: QueryPedidosDto) {
-    //mostrar pedidos de caja abierta
+  const where: any = {};
+
+  // 1. DETERMINAR EL FILTRO DE TIEMPO O SESIÓN
+  const d1 = this.parseDateMaybe(q.desde);
+  const d2 = this.parseDateMaybe(q.hasta);
+
+  if (d1 || d2) {
+    // A) Si el usuario eligió fechas, buscamos en ese rango (Histórico)
+    const inicio = d1 ? new Date(d1) : new Date('2000-01-01');
+    inicio.setHours(0, 0, 0, 0);
+
+    const fin = d2 ? new Date(d2) : new Date();
+    fin.setHours(23, 59, 59, 999);
+
+    where.created_at = Between(inicio, fin);
+  } else {
+    // B) Si NO hay fechas, intentamos mostrar la CAJA ABIERTA por defecto
     const cajaAbierta = await this.cajas.findOne({
       where: { estado: EstadoCaja.ABIERTA },
     });
 
     if (cajaAbierta) {
-      q.caja = cajaAbierta.id_caja;
+      where.caja = { id_caja: cajaAbierta.id_caja };
+    } else {
+      // Opcional: Si no hay caja abierta ni fechas, podrías mostrar los pedidos de "hoy"
+      const hoyInicio = new Date();
+      hoyInicio.setHours(0, 0, 0, 0);
+      const hoyFin = new Date();
+      hoyFin.setHours(23, 59, 59, 999);
+      where.created_at = Between(hoyInicio, hoyFin);
     }
-
-    const where: any = {};
-    if (q.caja) where.caja = { id_caja: q.caja };
-    if (q.tipo_pedido) where.tipo_pedido = q.tipo_pedido as any;
-    if (q.num_mesa !== undefined) where.num_mesa = q.num_mesa;
-    if (q.estado_pago) where.estado_pago = q.estado_pago;
-    if (q.estado_pedido) where.estado_pedido = q.estado_pedido;
-    if (q.metodo_pago) where.metodo_pago = q.metodo_pago;
-
-    const d1 = this.parseDateMaybe(q.desde);
-    const d2 = this.parseDateMaybe(q.hasta);
-    if (d1 && d2) {
-      const end = new Date(d2);
-      if (end.getHours() === 0 && end.getMinutes() === 0)
-        end.setHours(23, 59, 59, 999);
-      where.created_at = Between(d1, end);
-    } else if (d1) where.created_at = MoreThanOrEqual(d1);
-    else if (d2) {
-      const end = new Date(d2);
-      if (end.getHours() === 0 && end.getMinutes() === 0)
-        end.setHours(23, 59, 59, 999);
-      where.created_at = LessThanOrEqual(end);
-    }
-
-    const page = Math.max(1, Number(q.page ?? 1));
-    const pageSize = Math.max(1, Math.min(100, Number(q.pageSize ?? 50)));
-
-    const [rows, total] = await this.pedidos.findAndCount({
-      where,
-      order: { id_pedido: 'DESC' },
-      relations: { items: true },
-      take: pageSize,
-      skip: (page - 1) * pageSize,
-    });
-    return { total, page, pageSize, data: rows };
   }
-  // imports necesarios arriba:
-// import { EstadoPedido } from './pedido.entity';
-// import { In } from 'typeorm';
+
+  // 2. FILTROS ADICIONALES (Mesa, Estados, etc.)
+  if (q.caja && !where.caja) where.caja = { id_caja: q.caja }; // Por si mandan ID de caja específico
+  if (q.tipo_pedido) where.tipo_pedido = q.tipo_pedido;
+  if (q.num_mesa !== undefined) where.num_mesa = q.num_mesa;
+  if (q.estado_pago) where.estado_pago = q.estado_pago;
+  if (q.estado_pedido) where.estado_pedido = q.estado_pedido;
+  if (q.metodo_pago) where.metodo_pago = q.metodo_pago;
+
+  // 3. PAGINACIÓN
+  const page = Math.max(1, Number(q.page ?? 1));
+  const pageSize = Math.max(1, Math.min(100, Number(q.pageSize ?? 50)));
+
+  // 4. EJECUCIÓN DE LA CONSULTA
+  const [rows, total] = await this.pedidos.findAndCount({
+    where,
+    order: { id_pedido: 'DESC' }, // Los más recientes primero
+    relations: { 
+      items: { 
+        producto: true // Traemos el nombre del plato/bebida
+      } 
+    },
+    take: pageSize,
+    skip: (page - 1) * pageSize,
+  });
+
+  return { total, page, pageSize, data: rows };
+}
 
 async listaParaCocinaPorCaja(opts: { id_caja?: number; estado?: EstadoPedido; desde?: string }) {
   const where: any = {};
@@ -608,66 +621,6 @@ async resumenCocinaPorCaja(id_caja?: number) {
 }
 
 
-  // async listaParaCocina(desde?: string) {
-  //   const d = this.parseDateMaybe(desde);
-  //   const where: any = { estado_pedido: In([EstadoPedido.PENDIENTE, EstadoPedido.LISTO]) };
-  //   if (d) where.updated_at = MoreThanOrEqual(d);
-
-  //   return this.pedidos.find({
-  //     where,
-  //     relations: { items: { producto: true } },
-  //     order: { updated_at: 'ASC', id_pedido: 'ASC' },
-  //   });
-  // }
-  
-//   async listaParaCocina(opts?: { desde?: string; id_caja?: number }) {
-//     const d = this.parseDateMaybe(opts?.desde);
-
-//     // Determinar caja objetivo
-//     let id_caja = opts?.id_caja;
-//     if (!id_caja) {
-//       const cajaAbierta = await this.cajas.findOne({ where: { estado: EstadoCaja.ABIERTA } });
-//       if (!cajaAbierta) return []; // sin caja abierta => no hay feed de cocina
-//       id_caja = cajaAbierta.id_caja;
-//     }
-
-//     // Filtro base: solo PENDIENTE/LISTO de la caja actual
-//     const where: any = {
-//       estado_pedido: In([EstadoPedido.PENDIENTE, EstadoPedido.LISTO]),
-//       caja: { id_caja },
-//     };
-//     if (d) where.updated_at = MoreThanOrEqual(d);
-
-//     return this.pedidos.find({
-//       where,
-//       relations: { items: { producto: true } },
-//       order: { updated_at: 'ASC', id_pedido: 'ASC' },
-//     });
-//   }
-//   async resumenParaCocina(opts?: { id_caja?: number }) {
-//   // Determinar caja
-//   let id_caja = opts?.id_caja;
-//   if (!id_caja) {
-//     const cajaAbierta = await this.cajas.findOne({ where: { estado: EstadoCaja.ABIERTA } });
-//     if (!cajaAbierta) return { pendientes: 0, listos: 0 };
-//     id_caja = cajaAbierta.id_caja;
-//   }
-
-//   // Agrega group by por estado, filtrado por caja
-//   const rows = await this.pedidos.createQueryBuilder('p')
-//     .select('p.estado_pedido', 'estado')
-//     .addSelect('COUNT(1)', 'cantidad')
-//     .where('p.cajaIdCaja = :id_caja', { id_caja }) // o "p.caja = :id_caja" según tu FK; ver nota abajo
-//     .andWhere('p.estado_pedido IN (:...estados)', { estados: [EstadoPedido.PENDIENTE, EstadoPedido.LISTO] })
-//     .groupBy('p.estado_pedido')
-//     .getRawMany();
-
-//   const map = Object.fromEntries(rows.map(r => [r.estado, Number(r.cantidad)]));
-//   return {
-//     pendientes: map[EstadoPedido.PENDIENTE] ?? 0,
-//     listos: map[EstadoPedido.LISTO] ?? 0,
-//   };
-// }
 
 
   

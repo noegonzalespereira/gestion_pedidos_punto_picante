@@ -7,8 +7,11 @@ async function bootstrap() {
 
   // CORS
   app.enableCors({
-    origin: ['http://localhost:5173'], 
-    credentials: false,
+    origin: ['http://localhost:5173',
+      /\.vercel\.app$/
+    ], 
+    
+    credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     allowedHeaders: 'Content-Type,Authorization',
   });
@@ -22,6 +25,7 @@ async function bootstrap() {
 
   const port = process.env.PORT ? Number(process.env.PORT) : 3000;
   await app.listen(port);
-  console.log(`API corriendo en http://localhost:${port}`);
+  const logger = new Logger('Bootstrap');
+  logger.log(`API corriendo en el puerto: ${port}`);
 }
 bootstrap();
