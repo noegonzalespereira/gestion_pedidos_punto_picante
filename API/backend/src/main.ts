@@ -10,7 +10,7 @@ async function bootstrap() {
     origin: [
       //'http://localhost:5173',
       
-      'sistema-ventas-frontend-one.vercel.app'
+      'https://sistema-ventas-frontend-one.vercel.app'
     ], 
     
     credentials: true,
